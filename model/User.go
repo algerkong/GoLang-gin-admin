@@ -1,9 +1,12 @@
 package model
 
 import (
+	"encoding/base64"
 	"gin-gorm/utils/errmsg"
+	"log"
 
 	"github.com/jinzhu/gorm"
+	"golang.org/x/crypto/scrypt"
 )
 
 type User struct {
@@ -53,5 +56,32 @@ func GetUsers(pageSize, pageNum int) []User {
 }
 
 // 编辑用户
+func EditUser (data *User) int {
+    err := db.Model(&data).Updates(data)
+    if err.Error != nil {
+        return errmsg.ERROR
+    }
+    return errmsg.SUCCESS
+}
 
 // 删除用户
+func DeleteUser(id int) int {
+    err := db.Where("id = ?", id).Delete(&User{})
+    if err.Error != nil {
+        return errmsg.ERROR
+    }
+    return errmsg.SUCCESS
+}
+
+// 框架调用函数
+func (u *User)BeforeSave(){
+    u.Password = ScryptPwd(u.Password)
+}
+
+func ScryptPwd(password string) string{
+    HashPwd,err := scrypt.Key([]byte(password), []byte("scrypt"), 16384, 8, 1, 10)
+    if err != nil {
+        log.Fatal(err)
+    }
+    return base64.StdEncoding.EncodeToString(HashPwd)
+}
