@@ -31,7 +31,7 @@ func InitDb() {
     // 创建表
     db.AutoMigrate(&User{}, &Category{}, &Article{})
 
-    defer db.Close()
+    // defer db.Close()
 
     // 设置连接数据库时间
     db.DB().SetMaxIdleConns(10)
