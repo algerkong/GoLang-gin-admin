@@ -28,6 +28,16 @@ func CheckUser(username string) (code int) {
 	return errmsg.SUCCESS
 }
 
+// 查询用户是否存在
+func CheckUserID(id int) (code int) {
+    var user User
+    db.Where("id = ?", id).First(&user)
+    if user.ID > 0 {
+        return errmsg.SUCCESS
+    }
+    return errmsg.ERROR_USER_NOT_EXIST
+}
+
 // 添加用户
 func CreateUser(data *User) int {
 	err := db.Create(&data)
@@ -46,18 +56,25 @@ func GetUser(id int) User {
     
 
 // 查询所有用户
-func GetUsers(pageSize, pageNum int) []User {
+func GetUsers(pageSize, pageNum int) ([]User,int) {
 	var users []User
-	err := db.Offset(pageSize * (pageNum - 1)).Limit(pageSize).Find(&users)
+    var total int
+    db.Model(&User{}).Count(&total)
+    err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&users)
     if err.Error != nil && err.Error != gorm.ErrRecordNotFound {
-        return nil
+        return nil,0
     }
-	return users
+	return users,total
 }
 
 // 编辑用户
-func EditUser (data *User) int {
-    err := db.Model(&data).Updates(data)
+func EditUser (id int,data *User) int {
+    userMaps := make(map[string]interface{})
+    userMaps["username"] = data.Username
+    userMaps["age"] = data.Age
+    userMaps["role"] = data.Role
+    userMaps["avatar"] = data.Avatar
+    err := db.Model(&User{}).Where("id = ?", id).Updates(userMaps)
     if err.Error != nil {
         return errmsg.ERROR
     }
@@ -84,4 +101,20 @@ func ScryptPwd(password string) string{
         log.Fatal(err)
     }
     return base64.StdEncoding.EncodeToString(HashPwd)
+}
+
+// 登录验证
+func CheckLogin (username,password string) int {
+    var user User
+    db.Where("username = ?", username).First(&user)
+    if user.ID > 0 {
+        if ScryptPwd(password) != user.Password {
+            return errmsg.ERROR_PASSWORD_WRONG
+        }
+        return errmsg.SUCCESS
+    }
+    if user.Role != 0{
+        return errmsg.ERROR_USER_NO_RIGHT
+    }
+    return errmsg.ERROR_USER_NOT_EXIST
 }
