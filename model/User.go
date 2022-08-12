@@ -11,11 +11,11 @@ import (
 
 type User struct {
 	gorm.Model
-	Username string `gorm:"type:varchar(20);not null;unique" json:"username"`
-	Password string `gorm:"type:varchar(20);not null" json:"password"`
-	Age      int    `gorm:"type:int" json:"age"`
-	Role     int    `gorm:"type:int" json:"role"`
-	Avatar   string `gorm:"type:varchar(100)" json:"avatar"`
+	Username string `gorm:"type:varchar(20);not null;unique" json:"username" validate:"required,min=4,max=12" label:"用户名"`
+	Password string `gorm:"type:varchar(20);not null" json:"password" validate:"required,min=6,max=20" label:"密码"`
+	Age      int    `gorm:"type:int" json:"age" validate:"min=1,max=120" label:"年龄"`
+	Role     int    `gorm:"type:int; default:2" json:"role" validate:"required,gte=2" label:"角色码"`
+	Avatar   string `gorm:"type:varchar(100)" json:"avatar" validate:"max=100" label:"头像"`
 }
 
 // 查询用户是否存在
@@ -59,8 +59,7 @@ func GetUser(id int) User {
 func GetUsers(pageSize, pageNum int) ([]User,int) {
 	var users []User
     var total int
-    db.Model(&User{}).Count(&total)
-    err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&users)
+    err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&users).Count(&total)
     if err.Error != nil && err.Error != gorm.ErrRecordNotFound {
         return nil,0
     }

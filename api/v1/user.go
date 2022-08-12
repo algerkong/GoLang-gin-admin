@@ -3,6 +3,7 @@ package v1
 import (
 	"gin-gorm/model"
 	"gin-gorm/utils/errmsg"
+	"gin-gorm/utils/vaildator"
 	"net/http"
 	"strconv"
 
@@ -18,14 +19,21 @@ func UserExist(c *gin.Context) {
 func AddUser(c *gin.Context) {
 	var data model.User
 	c.ShouldBindJSON(&data)
-	code := model.CheckUser(data.Username)
+	msg, code := vaildator.Validate(&data)
+    if code != errmsg.SUCCESS {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "code": code,
+            "msg":  msg,
+        })
+        return
+    }
+	code = model.CheckUser(data.Username)
 	if code == errmsg.SUCCESS {
 		code = model.CreateUser(&data)
 	}
 	c.JSON(errmsg.GetHttpReq(code), gin.H{
 		"code": code,
 		"msg":  errmsg.GetErrMsg(code),
-		"data": data,
 	})
 
 }
@@ -33,18 +41,18 @@ func AddUser(c *gin.Context) {
 // 查询单个用户
 func GetUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-    code := model.CheckUserID(id)
-    var data model.User
-    if code != errmsg.ERROR{
-        data = model.GetUser(id)
-        if data.ID ==0{
-            c.JSON(http.StatusBadRequest, gin.H{
-                "code": errmsg.ERROR_USER_DELTED,
-                "msg":  errmsg.GetErrMsg(errmsg.ERROR_USER_DELTED),
-            })
-            return
-        }
-    }
+	code := model.CheckUserID(id)
+	var data model.User
+	if code != errmsg.ERROR {
+		data = model.GetUser(id)
+		if data.ID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code": errmsg.ERROR_USER_DELTED,
+				"msg":  errmsg.GetErrMsg(errmsg.ERROR_USER_DELTED),
+			})
+			return
+		}
+	}
 	c.JSON(errmsg.GetHttpReq(code), gin.H{
 		"code": code,
 		"msg":  errmsg.GetErrMsg(code),
@@ -63,7 +71,7 @@ func GetUsers(c *gin.Context) {
 	if pageNum == 0 {
 		pageNum = -1
 	}
-	data,total := model.GetUsers(pageSize, pageNum)
+	data, total := model.GetUsers(pageSize, pageNum)
 	if data == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": errmsg.ERROR,
@@ -72,10 +80,10 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": errmsg.SUCCESS,
-		"msg":  errmsg.GetErrMsg(errmsg.SUCCESS),
-		"data": data,
-        "total": total,
+		"code":  errmsg.SUCCESS,
+		"msg":   errmsg.GetErrMsg(errmsg.SUCCESS),
+		"data":  data,
+		"total": total,
 	})
 }
 

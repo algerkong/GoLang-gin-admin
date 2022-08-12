@@ -50,8 +50,7 @@ func GetCategory(id int) (category Category) {
 func GetCategories(pageSize, pageNum int) ([]Category, int) {
 	var categories []Category
 	var total int
-	db.Model(&Category{}).Count(&total)
-	err := db.Offset(pageSize * (pageNum - 1)).Limit(pageSize).Find(&categories)
+	err := db.Offset(pageSize * (pageNum - 1)).Limit(pageSize).Find(&categories).Count(&total)
 	if err.Error != nil && err.Error != gorm.ErrRecordNotFound {
 		return nil, 0
 	}
