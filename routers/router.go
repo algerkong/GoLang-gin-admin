@@ -11,11 +11,13 @@ import (
 func InitRouter() {
 	gin.SetMode(utils.AppMode)
 	r := gin.Default()
+    r.Use(middleware.Cors())
 
 	auth := r.Group("api/v1")
 	auth.Use(middleware.JwtToken())
 	{
 		// 用户模块的路由接口
+        auth.POST("/user/add",v1.AddUser)
 		auth.PUT("/user/:id", v1.EditUser)
 		auth.DELETE("/user/:id", v1.DeleteUser)
 
@@ -28,12 +30,13 @@ func InitRouter() {
 		auth.POST("/article/add", v1.AddArticle)
 		auth.PUT("/article/:id", v1.EditArticle)
 		auth.DELETE("/article/:id", v1.DeleteArticle)
+
+        // 上传文件
+        auth.POST("/upload", v1.Upload)
 	}
 
 	router := r.Group("api/v1")
 	{
-		router.POST("/user/add", v1.AddUser)
-
         router.POST("/login", v1.Login)
 		router.GET("/users", v1.GetUsers)
 		router.GET("/user/:id", v1.GetUser)
