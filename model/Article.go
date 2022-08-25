@@ -55,7 +55,8 @@ func GetArtilce(id uint) (Article, int) {
 func GetCategoryArticles(id uint, pageSize, pageNum int) ([]Article, int, int) {
 	var articleList []Article
 	var total int
-	err := db.Preload("Category").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("category_id=?", id).Find(&articleList).Count(&total)
+    db.Preload("Category").Where("category_id=?",id).Model(&Article{}).Count(&total)
+	err := db.Preload("Category").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("category_id=?", id).Find(&articleList)
 	if err.Error != nil {
 		return nil, 0, errmsg.ERROR
 	}
@@ -66,7 +67,8 @@ func GetCategoryArticles(id uint, pageSize, pageNum int) ([]Article, int, int) {
 func GetArtilces(pageSize, pageNum int) ([]Article, int, int) {
 	var articleList []Article
 	var total int
-	err := db.Preload("Category").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&articleList).Count(&total)
+    db.Model(&Article{}).Count(&total)
+	err := db.Preload("Category").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&articleList)
 	if err.Error != nil && err.Error != gorm.ErrRecordNotFound {
 		return nil, total, errmsg.ERROR
 	}

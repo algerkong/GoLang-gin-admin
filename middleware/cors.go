@@ -12,7 +12,7 @@ func Cors() gin.HandlerFunc {
         AllowAllOrigins: true,
         AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
         AllowHeaders:    []string{"Origin"},
-        ExposeHeaders:   []string{"Content-Length","Authorization"},
+        ExposeHeaders:   []string{"Content-Length","Authorization","Content-Type"},
         MaxAge: 12 * time.Hour,
     })
 }

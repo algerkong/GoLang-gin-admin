@@ -59,7 +59,8 @@ func GetUser(id int) User {
 func GetUsers(pageSize, pageNum int) ([]User,int) {
 	var users []User
     var total int
-    err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&users).Count(&total)
+    db.Model(&User{}).Count(&total)
+    err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&users)
     if err.Error != nil && err.Error != gorm.ErrRecordNotFound {
         return nil,0
     }
@@ -69,10 +70,18 @@ func GetUsers(pageSize, pageNum int) ([]User,int) {
 // 编辑用户
 func EditUser (id int,data *User) int {
     userMaps := make(map[string]interface{})
-    userMaps["username"] = data.Username
-    userMaps["age"] = data.Age
-    userMaps["role"] = data.Role
-    userMaps["avatar"] = data.Avatar
+    if data.Username != ""{
+        userMaps["username"] = data.Username
+    }
+    if data.Age != 0{
+        userMaps["age"] = data.Age
+    }
+    if data.Role != 0{
+        userMaps["role"] = data.Role
+    }
+    if data.Avatar != ""{
+        userMaps["avatar"] = data.Avatar
+    }
     err := db.Model(&User{}).Where("id = ?", id).Updates(userMaps)
     if err.Error != nil {
         return errmsg.ERROR
@@ -103,17 +112,17 @@ func ScryptPwd(password string) string{
 }
 
 // 登录验证
-func CheckLogin (username,password string) int {
+func CheckLogin (username,password string) (User,int) {
     var user User
     db.Where("username = ?", username).First(&user)
     if user.ID > 0 {
         if ScryptPwd(password) != user.Password {
-            return errmsg.ERROR_PASSWORD_WRONG
+            return user, errmsg.ERROR_PASSWORD_WRONG
         }
-        return errmsg.SUCCESS
+        return user,errmsg.SUCCESS
     }
     if user.Role != 0{
-        return errmsg.ERROR_USER_NO_RIGHT
+        return user,errmsg.ERROR_USER_NO_RIGHT
     }
-    return errmsg.ERROR_USER_NOT_EXIST
+    return user,errmsg.ERROR_USER_NOT_EXIST
 }

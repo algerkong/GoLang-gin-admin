@@ -3,8 +3,13 @@
 </script>
 
 <template>
-    <h1>Hello world</h1>
+    <div class="main">
+        <router-view></router-view>
+    </div>
 </template>
 
 <style scoped>
+.main{
+    height: 100vh;
+}
 </style>
